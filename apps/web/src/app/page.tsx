@@ -1,8 +1,12 @@
-// if you only import the store, you won't have to add the "use client" directive
+// Server component - can also use hooks (they gracefully degrade)
 import { animalStore, userStore } from "../store";
-import Animal from "../components/Animal";
+import TestAtomReactivity from "../components/TestAtomReactivity";
 
 export default function Home() {
+  // ✅ This works on server - direct store access
+  const animalName = animalStore.get("name");
+  const userInfo = userStore.getAll();
+
   return (
     <main className="flex min-h-screen flex-col items-center justify-between p-24">
       <div className="z-10 max-w-5xl w-full items-center justify-between font-mono text-sm lg:flex">
@@ -28,18 +32,39 @@ export default function Home() {
             Welcome to <span className="text-blue-600">Next Tiny RX Store</span>
           </h1>
           <p className="text-gray-600 dark:text-gray-300 mb-6">
-            A modern monorepo setup with Turborepo, Next.js, TypeScript,
-            Tailwind CSS, and Biome.js
+            A reactive state management library with full SSR support
           </p>
-          <div className="flex gap-4 justify-center">
-            <button>Get Started</button>
-            <button>Learn More</button>
+
+          <div className="mb-6 p-4 bg-gray-100 dark:bg-gray-800 rounded">
+            <h3 className="font-semibold mb-2">Server-Side Store Access</h3>
+            <p className="text-sm">
+              Animal name: <strong>{animalName}</strong>
+            </p>
+            <p className="text-sm">
+              User: <strong>{userInfo.username}</strong> (age: {userInfo.age},
+              adult: {userInfo.isAdult ? "yes" : "no"})
+            </p>
+            <p className="text-xs text-gray-500 mt-2">
+              ☝️ This data was read on the server
+            </p>
           </div>
+          <p className="text-xl text-gray-500 mt-2 animate-pulse">
+            ☝️ The data above WILL NOT change if the client modifies the store
+            (this demonstrates server/client separation)
+          </p>
         </div>
       </div>
 
-      <div>
-        <Animal />
+      <div className="mt-8 p-6 bg-green-50 dark:bg-green-900/20 rounded-lg">
+        <h2 className="text-xl font-semibold mb-4 text-center">
+          Universal Hooks Demo
+        </h2>
+        <p className="text-sm text-gray-600 dark:text-gray-300 mb-4 text-center">
+          These components use the same hooks (useField, useStore) that work on
+          both server and client! Server: Static values (SSR), Client: Full
+          reactivity
+        </p>
+        <TestAtomReactivity />
       </div>
 
       <div className="mb-32 grid text-center lg:max-w-5xl lg:w-full lg:mb-0 lg:grid-cols-4 lg:text-left">
