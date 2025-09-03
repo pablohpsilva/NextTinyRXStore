@@ -21,110 +21,6 @@ export class FieldStore<T extends Record<string, unknown>> {
   private cache: Record<string, CacheEntry> = {};
   private _fieldVersions: Record<string, number> = {};
 
-  // Backward compatibility for tests that access fieldVersions as Map - returns a live Map
-  get fieldVersions(): Map<keyof T, number> {
-    const self = this;
-    return new Proxy(new Map<keyof T, number>(), {
-      get(target, prop) {
-        if (prop === "size") {
-          return Object.keys(self._fieldVersions).length;
-        }
-        if (prop === "has") {
-          return (key: keyof T) => String(key) in self._fieldVersions;
-        }
-        if (prop === "get") {
-          return (key: keyof T) => self._fieldVersions[String(key)] || 0;
-        }
-        if (prop === "keys") {
-          return () => Object.keys(self._fieldVersions)[Symbol.iterator]();
-        }
-        if (prop === "values") {
-          return () => Object.values(self._fieldVersions)[Symbol.iterator]();
-        }
-        if (prop === "entries") {
-          return () =>
-            Object.entries(self._fieldVersions)
-              .map(([key, value]) => [key as keyof T, value])
-              [Symbol.iterator]();
-        }
-        if (prop === "forEach") {
-          return (
-            callback: (
-              value: number,
-              key: keyof T,
-              map: Map<keyof T, number>
-            ) => void
-          ) => {
-            for (const key in self._fieldVersions) {
-              callback(self._fieldVersions[key], key as keyof T, target);
-            }
-          };
-        }
-        if (prop === Symbol.iterator) {
-          return () =>
-            Object.entries(self._fieldVersions)
-              .map(([key, value]) => [key as keyof T, value])
-              [Symbol.iterator]();
-        }
-        return Reflect.get(target, prop);
-      },
-    });
-  }
-
-  // Backward compatibility alias for tests - returns a live Map that reflects current cache state
-  get cachedSnapshots(): Map<string, () => unknown> {
-    const self = this;
-    return new Proxy(new Map<string, () => unknown>(), {
-      get(target, prop) {
-        if (prop === "size") {
-          return Object.keys(self.cache).length;
-        }
-        if (prop === "has") {
-          return (key: string) => key in self.cache;
-        }
-        if (prop === "get") {
-          return (key: string) => self.cache[key]?.snapshot;
-        }
-        if (prop === "keys") {
-          return () => Object.keys(self.cache)[Symbol.iterator]();
-        }
-        if (prop === "values") {
-          return () =>
-            Object.values(self.cache)
-              .map((entry) => entry.snapshot)
-              [Symbol.iterator]();
-        }
-        if (prop === "entries") {
-          return () =>
-            Object.entries(self.cache)
-              .map(([key, entry]) => [key, entry.snapshot])
-              [Symbol.iterator]();
-        }
-        if (prop === "forEach") {
-          return (
-            callback: (
-              value: () => unknown,
-              key: string,
-              map: Map<string, () => unknown>
-            ) => void
-          ) => {
-            for (const key in self.cache) {
-              callback(self.cache[key].snapshot, key, target);
-            }
-          };
-        }
-        if (prop === "delete") {
-          return (key: string) => {
-            const existed = key in self.cache;
-            delete self.cache[key];
-            return existed;
-          };
-        }
-        return Reflect.get(target, prop);
-      },
-    });
-  }
-
   constructor(initialState: T) {
     this.subjects = {} as { [K in keyof T]: BehaviorSubject<T[K]> };
     this.setters = {} as typeof this.setters;
@@ -175,18 +71,10 @@ export class FieldStore<T extends Record<string, unknown>> {
       const newVal = partial[key]!;
       const oldVal = this.subjects[key].getValue();
 
-      console.log(
-        `[STORE DEBUG] ${String(
-          key
-        )}: ${oldVal} -> ${newVal}, equal: ${Object.is(oldVal, newVal)}`
-      );
-
       if (!Object.is(oldVal, newVal)) {
         changedKeys.push(key as keyof T);
       }
     }
-
-    console.log(`[STORE DEBUG] Changed keys:`, changedKeys);
     if (changedKeys.length === 0) return;
 
     // Update versions and invalidate cache for changed fields
@@ -229,27 +117,19 @@ export class FieldStore<T extends Record<string, unknown>> {
 
   /** Simplified cache invalidation */
   private invalidateCache(fieldKey: string): void {
-    console.log(`[CACHE DEBUG] Invalidating cache for field: ${fieldKey}`);
-    const keysToDelete: string[] = [];
-
     // Remove cache entries that depend on this field
     for (const cacheKey in this.cache) {
       // Check if cache key depends on this field
       if (cacheKey === `field:${fieldKey}`) {
-        keysToDelete.push(cacheKey);
+        delete this.cache[cacheKey];
       } else if (cacheKey.startsWith("fields:")) {
         // For multi-field caches, check if this field is in the list
         const fieldsStr = cacheKey.substring(7); // Remove "fields:" prefix
         const fields = fieldsStr.split(",");
         if (fields.includes(fieldKey)) {
-          keysToDelete.push(cacheKey);
+          delete this.cache[cacheKey];
         }
       }
-    }
-
-    console.log(`[CACHE DEBUG] Deleting cache keys:`, keysToDelete);
-    for (const key of keysToDelete) {
-      delete this.cache[key];
     }
   }
 

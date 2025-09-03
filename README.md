@@ -18,9 +18,9 @@ NextTinyRXStore combines the power of RxJS with React's latest hooks to deliver 
 
 NextTinyRXStore is truly **tiny** and optimized for production:
 
-- **ESM (Modern)**: 3.9 KB (1.5 KB gzipped) ⚡
-- **CommonJS**: 5.1 KB (1.7 KB gzipped)
-- **UMD (Browser)**: 4.1 KB (1.5 KB gzipped)
+- **ESM (Modern)**: 4.9 KB (1.9 KB gzipped) ⚡
+- **CommonJS**: 6.1 KB (2.1 KB gzipped)
+- **UMD (Browser)**: 5.1 KB (1.9 KB gzipped)
 - **TypeScript definitions**: Included
 - **Tree-shakeable**: Import only what you need
 

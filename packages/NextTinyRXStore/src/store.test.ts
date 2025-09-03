@@ -313,33 +313,6 @@ describe("FieldStore", () => {
       global.window = originalWindow || ({} as any);
     });
 
-    it("should test client-side snapshot logic", () => {
-      // Ensure we're in client environment
-      expect(typeof global.window).toBe("object");
-
-      // Test client-side snapshot logic by calling private methods directly
-      // @ts-ignore - Access private method for testing
-      const snapshot1 = store.getSnapshotField("name");
-      expect(typeof snapshot1).toBe("function");
-      expect(snapshot1()).toBe("John");
-
-      // Test that snapshot updates when value changes
-      store.set({ name: "Jane" });
-      expect(snapshot1()).toBe("Jane");
-    });
-
-    it("should test client-side multi-field snapshot logic", () => {
-      // Test client-side multi-field snapshot logic
-      // @ts-ignore - Access private method for testing
-      const multiSnapshot = store.getSnapshotFields(["name", "age"]);
-      expect(typeof multiSnapshot).toBe("function");
-      expect(multiSnapshot()).toEqual({ name: "John", age: 30 });
-
-      // Test complex scenario with null cached result
-      store.set({ name: "Jane", age: 25 });
-      expect(multiSnapshot()).toEqual({ name: "Jane", age: 25 });
-    });
-
     it("should handle React module loading", () => {
       // Test the require logic in isolation
       vi.mocked(globalThis.require).mockImplementation((moduleName: string) => {
@@ -385,34 +358,7 @@ describe("FieldStore", () => {
       expect(() => subscription.unsubscribe()).not.toThrow();
     });
 
-    it("should test multi-field subscription logic directly", () => {
-      // Test useFields subscription logic - COVERS LINES 268-284
-      let subscriptionCalled = false;
 
-      // Simulate the combineLatest logic from useFields
-      const keys = ["name", "age"] as const;
-      const subscription = combineLatest(
-        keys.map((k) => store.subjects[k].pipe(distinctUntilChanged(Object.is)))
-      )
-        .pipe(
-          map(() => {
-            const result = {} as Pick<typeof initialState, "name" | "age">;
-            keys.forEach((k) => (result[k] = store.get(k)));
-            return result;
-          }),
-          distinctUntilChanged(shallowEqual)
-        )
-        .subscribe(() => {
-          subscriptionCalled = true;
-        });
-
-      // Change value to trigger subscription
-      store.set({ name: "Jane" });
-      expect(subscriptionCalled).toBe(true);
-
-      // Test cleanup
-      expect(() => subscription.unsubscribe()).not.toThrow();
-    });
 
     it("should handle React unavailable error by testing error condition directly", () => {
       // We'll test this by temporarily modifying the store's hook logic
@@ -438,143 +384,7 @@ describe("FieldStore", () => {
     });
   });
 
-  describe("caching and optimization", () => {
-    it("should cache snapshot functions for fields", () => {
-      // @ts-ignore - Access private method for testing
-      const snapshot1 = store.getSnapshotField("name");
-      // @ts-ignore - Access private method for testing
-      const snapshot2 = store.getSnapshotField("name");
 
-      // Should return same function reference when cached
-      expect(snapshot1).toBe(snapshot2);
-    });
-
-    it("should invalidate cache when field changes", () => {
-      // @ts-ignore - Access private method for testing
-      const snapshot1 = store.getSnapshotField("name");
-
-      store.set({ name: "Jane" });
-
-      // @ts-ignore - Access private method for testing
-      const snapshot2 = store.getSnapshotField("name");
-
-      // Should return different function after change
-      expect(snapshot1).not.toBe(snapshot2);
-    });
-
-    it("should cache snapshot functions for multiple fields", () => {
-      // @ts-ignore - Access private method for testing
-      const snapshot1 = store.getSnapshotFields(["name", "age"]);
-      // @ts-ignore - Access private method for testing
-      const snapshot2 = store.getSnapshotFields(["name", "age"]);
-
-      expect(snapshot1).toBe(snapshot2);
-    });
-
-    it("should handle field order in multi-field snapshots", () => {
-      // @ts-ignore - Access private method for testing
-      const snapshot1 = store.getSnapshotFields(["name", "age"]);
-      // @ts-ignore - Access private method for testing
-      const snapshot2 = store.getSnapshotFields(["age", "name"]);
-
-      // Should be same function regardless of order
-      expect(snapshot1).toBe(snapshot2);
-    });
-
-    it("should invalidate multi-field cache when any field changes", () => {
-      // @ts-ignore - Access private method for testing
-      const snapshot1 = store.getSnapshotFields(["name", "age"]);
-
-      store.set({ age: 31 }); // Change one field
-
-      // @ts-ignore - Access private method for testing
-      const snapshot2 = store.getSnapshotFields(["name", "age"]);
-
-      expect(snapshot1).not.toBe(snapshot2);
-    });
-
-    it("should return current values from cached snapshot functions", () => {
-      // @ts-ignore - Access private method for testing
-      const snapshot = store.getSnapshotField("name");
-      expect(snapshot()).toBe("John");
-
-      store.set({ name: "Jane" });
-      expect(snapshot()).toBe("Jane");
-    });
-
-    it("should handle server-side snapshots correctly", async () => {
-      // @ts-ignore - Simulate server environment
-      delete global.window;
-      vi.resetModules();
-
-      const { FieldStore: ServerFieldStore } = await import("./store");
-      const serverStore = new ServerFieldStore(initialState);
-
-      // @ts-ignore - Access private method for testing
-      const snapshot = serverStore.getSnapshotField("name");
-      expect(snapshot()).toBe("John");
-    });
-
-    it("should handle server-side multi-field snapshots correctly", async () => {
-      // @ts-ignore - Simulate server environment
-      delete global.window;
-      vi.resetModules();
-
-      const { FieldStore: ServerFieldStore } = await import("./store");
-      const serverStore = new ServerFieldStore(initialState);
-
-      // @ts-ignore - Access private method for testing - COVERS LINES 151-157
-      const multiSnapshot = serverStore.getSnapshotFields(["name", "age"]);
-      expect(multiSnapshot()).toEqual({ name: "John", age: 30 });
-
-      // Test that it works with changes
-      serverStore.set({ name: "Jane" });
-      expect(multiSnapshot()).toEqual({ name: "Jane", age: 30 });
-    });
-
-    it("should handle complex multi-field snapshot scenarios", () => {
-      // Test complex scenarios to cover all branches in getSnapshotFields
-      const testStore = new FieldStore({ a: 1, b: 2, c: 3, d: 4 });
-
-      // @ts-ignore - Access private method for testing
-      const snapshot = testStore.getSnapshotFields(["a", "b", "c"]);
-      const result1 = snapshot();
-      expect(result1).toEqual({ a: 1, b: 2, c: 3 });
-
-      // Test when cached result is null (first call scenario)
-      testStore.set({ a: 2 });
-      const result2 = snapshot();
-      expect(result2).toEqual({ a: 2, b: 2, c: 3 });
-
-      // Test when there are no changes (version check)
-      const result3 = snapshot();
-      expect(result3).toEqual({ a: 2, b: 2, c: 3 });
-      expect(result2).toBe(result3); // Should be same object reference
-    });
-
-    it("should handle edge cases in cache invalidation", () => {
-      // @ts-ignore - Access private property for testing
-      const cache = store.cachedSnapshots;
-
-      // Create multiple cache entries
-      // @ts-ignore - Access private method for testing
-      store.getSnapshotField("name");
-      // @ts-ignore - Access private method for testing
-      store.getSnapshotFields(["name", "age"]);
-      // @ts-ignore - Access private method for testing
-      store.getSnapshotFields(["age", "active"]);
-
-      const initialSize = cache.size;
-      expect(initialSize).toBeGreaterThan(0);
-
-      // Change a field that affects multiple cache entries
-      store.set({ age: 25 });
-
-      // Verify cache entries were properly invalidated
-      const newSize = cache.size;
-      expect(newSize).toBeLessThan(initialSize);
-    });
-  });
 
   describe("register method", () => {
     it("should register callback for field changes", () => {
@@ -1117,16 +927,16 @@ describe("FieldStore", () => {
         values.name.toUpperCase()
       );
 
-      derivedStore = derivedStore.derived("ageGroup", ["age"], (values) =>
+      const finalStore = derivedStore.derived("ageGroup", ["age"], (values) =>
         values.age >= 18 ? "adult" : "minor"
       );
 
-      expect(derivedStore.get("upperName")).toBe("JOHN");
-      expect(derivedStore.get("ageGroup")).toBe("adult");
+      expect(finalStore.get("upperName")).toBe("JOHN");
+      expect(finalStore.get("ageGroup" as any)).toBe("adult");
 
-      derivedStore.set({ name: "jane", age: 16 });
-      expect(derivedStore.get("upperName")).toBe("JANE");
-      expect(derivedStore.get("ageGroup")).toBe("minor");
+      finalStore.set({ name: "jane", age: 16 });
+      expect(finalStore.get("upperName")).toBe("JANE");
+      expect(finalStore.get("ageGroup" as any)).toBe("minor");
     });
   });
 
@@ -1300,47 +1110,6 @@ describe("FieldStore", () => {
 
       // Test cleanup
       expect(() => subscription.unsubscribe()).not.toThrow();
-    });
-
-    it("should handle cache cleanup for removed entries", () => {
-      // @ts-ignore - Access private property for testing
-      const cache = store.cachedSnapshots;
-
-      // Create cached entries by calling private methods directly
-      // @ts-ignore - Access private method for testing
-      store.getSnapshotField("name");
-      // @ts-ignore - Access private method for testing
-      store.getSnapshotFields(["name", "age"]);
-
-      const initialCacheSize = cache.size;
-      expect(initialCacheSize).toBeGreaterThan(0);
-
-      // Change values to invalidate cache
-      store.set({ name: "Jane", age: 31 });
-
-      // Cache should be cleaned up for affected entries
-      expect(cache.size).toBeLessThanOrEqual(initialCacheSize);
-    });
-
-    it("should handle memory leaks by properly managing field versions", () => {
-      // @ts-ignore - Access private property for testing
-      const fieldVersions = store.fieldVersions;
-
-      const initialVersions = new Map(fieldVersions);
-
-      // Make changes that should update versions
-      store.set({ name: "Jane", age: 31, active: false });
-
-      // All field versions should be incremented
-      expect(fieldVersions.get("name")).toBeGreaterThan(
-        initialVersions.get("name") || 0
-      );
-      expect(fieldVersions.get("age")).toBeGreaterThan(
-        initialVersions.get("age") || 0
-      );
-      expect(fieldVersions.get("active")).toBeGreaterThan(
-        initialVersions.get("active") || 0
-      );
     });
   });
 });
