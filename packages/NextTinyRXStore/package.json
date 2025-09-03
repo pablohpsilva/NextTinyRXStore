@@ -1,0 +1,37 @@
+{
+  "name": "@repo/next-tiny-rx-store",
+  "version": "0.1.0",
+  "description": "A tiny reactive store for Next.js applications",
+  "private": true,
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "lint": "biome lint .",
+    "format": "biome format --write .",
+    "type-check": "tsc --noEmit",
+    "clean": "rm -rf dist"
+  },
+  "keywords": [
+    "react",
+    "nextjs",
+    "state-management",
+    "reactive",
+    "store",
+    "typescript"
+  ],
+  "devDependencies": {
+    "@biomejs/biome": "^1.8.3",
+    "@types/react": "^18.3.3",
+    "react": "^18.3.1",
+    "typescript": "^5.5.4"
+  },
+  "peerDependencies": {
+    "react": "^18.3.1",
+    "rxjs": "^7.8.2"
+  }
+}

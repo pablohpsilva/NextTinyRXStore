@@ -1,0 +1,22 @@
+{
+  "name": "next-tiny-rx-store",
+  "private": true,
+  "scripts": {
+    "build": "turbo build",
+    "dev": "turbo dev",
+    "lint": "turbo lint",
+    "format": "turbo format",
+    "type-check": "turbo type-check",
+    "clean": "turbo clean"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^1.8.3",
+    "turbo": "^2.0.14",
+    "typescript": "^5.5.4"
+  },
+  "packageManager": "pnpm@9.7.1",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ]
+}
