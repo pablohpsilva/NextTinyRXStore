@@ -1,6 +1,6 @@
 # NextTinyRXStore 🚀
 
-**The most performant, SSR-friendly reactive state management library for Next.js applications.**
+**Performant, SSR-friendly reactive state management library for Next.js applications.**
 
 NextTinyRXStore combines the power of RxJS with React's latest hooks to deliver lightning-fast state management that works seamlessly on both server and client. No more hydration mismatches, no more dynamic imports, just pure reactive bliss.
 
@@ -18,9 +18,10 @@ NextTinyRXStore combines the power of RxJS with React's latest hooks to deliver 
 
 NextTinyRXStore is truly **tiny** and optimized for production:
 
-- **JavaScript**: 12.7 KB (uncompressed)
-- **Gzipped**: 3.3 KB ⚡
-- **TypeScript definitions**: 3.7 KB
+- **ESM (Modern)**: 3.9 KB (1.5 KB gzipped) ⚡
+- **CommonJS**: 5.1 KB (1.7 KB gzipped)
+- **UMD (Browser)**: 4.1 KB (1.5 KB gzipped)
+- **TypeScript definitions**: Included
 - **Tree-shakeable**: Import only what you need
 
 _For comparison: Zustand is ~2.3KB gzipped, Redux Toolkit is ~23KB gzipped_
@@ -50,6 +51,38 @@ export const userStore = createFieldStore({
 });
 ```
 
+### Server-Side Usage
+
+```tsx
+// app/page.tsx (Server Component)
+import { userStore } from "../store/userStore";
+import UserProfile from "../components/UserProfile";
+
+export default function HomePage() {
+  // ✨ Works perfectly on the server!
+  const userName = userStore.get("name");
+  const userAge = userStore.get("age");
+  userStore.setters.setName("Cat");
+
+  // Initialize server-side data
+  userStore.set({
+    name: "Server-initialized User",
+    age: 30,
+  });
+
+  return (
+    <main>
+      <h1>
+        Server Data: {userName} is {userAge} years old
+      </h1>
+      <UserProfile /> {/* Will hydrate with server state */}
+    </main>
+  );
+}
+```
+
+Whenever the client needs to either read or write on the store:
+
 ```tsx
 // components/UserProfile.tsx
 "use client";
@@ -69,35 +102,6 @@ export default function UserProfile() {
         🎂 Happy Birthday!
       </button>
     </div>
-  );
-}
-```
-
-### Server-Side Usage
-
-```tsx
-// app/page.tsx (Server Component)
-import { userStore } from "../store/userStore";
-import UserProfile from "../components/UserProfile";
-
-export default function HomePage() {
-  // ✨ Works perfectly on the server!
-  const userName = userStore.get("name");
-  const userAge = userStore.get("age");
-
-  // Initialize server-side data
-  userStore.set({
-    name: "Server-initialized User",
-    age: 30,
-  });
-
-  return (
-    <main>
-      <h1>
-        Server Data: {userName} is {userAge} years old
-      </h1>
-      <UserProfile /> {/* Will hydrate with server state */}
-    </main>
   );
 }
 ```

@@ -6,6 +6,7 @@ export default function Home() {
   // ✅ This works on server - direct store access
   const animalName = animalStore.get("name");
   const userInfo = userStore.getAll();
+  animalStore.setters.setName("Cat");
 
   return (
     <main className="flex min-h-screen flex-col items-center justify-between p-24">
