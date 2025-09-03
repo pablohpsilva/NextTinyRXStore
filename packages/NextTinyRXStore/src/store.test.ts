@@ -616,6 +616,423 @@ describe("FieldStore", () => {
       store.set({ name: "John" }); // same value
       expect(callback).not.toHaveBeenCalled();
     });
+
+    it("should prevent duplicate callback registration using function hash", () => {
+      const callback = vi.fn();
+
+      // Register the same callback twice
+      store.register("name", callback);
+      store.register("name", callback);
+
+      store.set({ name: "Jane" });
+
+      // Callback should only be called once, not twice
+      expect(callback).toHaveBeenCalledTimes(1);
+      expect(callback).toHaveBeenCalledWith("Jane");
+    });
+
+    it("should prevent duplicate generated callbacks with same logic", () => {
+      // Create two callbacks with identical logic
+      const createCallback = () =>
+        vi.fn((name: string) => {
+          console.log(`Name changed to: ${name}`);
+        });
+
+      const callback1 = createCallback();
+      const callback2 = createCallback();
+
+      // These should be considered duplicates because they have the same function body
+      store.register("name", callback1);
+      store.register("name", callback2); // Should replace callback1
+
+      store.set({ name: "Jane" });
+
+      // Only one callback should be triggered (the second one replaced the first)
+      expect(callback1).not.toHaveBeenCalled();
+      expect(callback2).toHaveBeenCalledWith("Jane");
+    });
+
+    it("should allow different callbacks with different logic", () => {
+      const callback1 = vi.fn((name: string) => {
+        console.log(`Hello, ${name}!`);
+      });
+
+      const callback2 = vi.fn((name: string) => {
+        console.log(`Welcome, ${name}!`);
+      });
+
+      store.register("name", callback1);
+      store.register("name", callback2);
+
+      store.set({ name: "Jane" });
+
+      // Both callbacks should be called since they have different logic
+      expect(callback1).toHaveBeenCalledWith("Jane");
+      expect(callback2).toHaveBeenCalledWith("Jane");
+    });
+
+    it("should return cleanup function from register", () => {
+      const callback = vi.fn();
+      const cleanup = store.register("name", callback);
+
+      expect(typeof cleanup).toBe("function");
+
+      // Test that callback works
+      store.set({ name: "Jane" });
+      expect(callback).toHaveBeenCalledWith("Jane");
+
+      // Test cleanup function
+      cleanup();
+      callback.mockClear();
+
+      // After cleanup, callback should not be called
+      store.set({ name: "Bob" });
+      expect(callback).not.toHaveBeenCalled();
+    });
+
+    it("should return no-op cleanup function for duplicate registrations", () => {
+      const callback = vi.fn();
+
+      const cleanup1 = store.register("name", callback);
+      const cleanup2 = store.register("name", callback); // duplicate
+
+      expect(typeof cleanup1).toBe("function");
+      expect(typeof cleanup2).toBe("function");
+
+      // Test that callback works
+      store.set({ name: "Jane" });
+      expect(callback).toHaveBeenCalledTimes(1);
+
+      // Call the no-op cleanup (from duplicate registration)
+      cleanup2();
+      callback.mockClear();
+
+      // Callback should still work since real registration wasn't removed
+      store.set({ name: "Bob" });
+      expect(callback).toHaveBeenCalledWith("Bob");
+
+      // Now call the real cleanup
+      cleanup1();
+      callback.mockClear();
+
+      // Now callback should not be called
+      store.set({ name: "Alice" });
+      expect(callback).not.toHaveBeenCalled();
+    });
+
+    it("should handle React Strict Mode scenario with hash-based deduplication", () => {
+      // Simulate the actual React Strict Mode scenario from your demo
+      const addLog = vi.fn();
+
+      const ageCallback = (addLogFn: typeof addLog) => (newAge: number) => {
+        addLogFn(`Age changed to: ${newAge}`);
+        if (newAge >= 18) {
+          addLogFn("🎉 User is now an adult!");
+        }
+      };
+
+      // Simulate useEffect running twice in strict mode
+      const cleanup1 = store.register("age", ageCallback(addLog));
+      const cleanup2 = store.register("age", ageCallback(addLog)); // Different function instances but same logic
+
+      // Even though we have different function instances, they should be deduplicated by hash
+      store.set({ age: 21 });
+
+      // addLog should only be called twice (once for the age change, once for adult message)
+      // If duplicates weren't prevented, it would be called 4 times
+      expect(addLog).toHaveBeenCalledTimes(2);
+      expect(addLog).toHaveBeenCalledWith("Age changed to: 21");
+      expect(addLog).toHaveBeenCalledWith("🎉 User is now an adult!");
+
+      // Cleanup should work
+      cleanup1();
+      cleanup2(); // Should be safe to call
+
+      addLog.mockClear();
+
+      // After cleanup, callback should not be called
+      store.set({ age: 25 });
+      expect(addLog).not.toHaveBeenCalled();
+    });
+
+    it("should allow different callbacks for same field", () => {
+      const callback1 = vi.fn();
+      const callback2 = vi.fn();
+
+      store.register("name", callback1);
+      store.register("name", callback2);
+
+      store.set({ name: "Jane" });
+
+      expect(callback1).toHaveBeenCalledWith("Jane");
+      expect(callback2).toHaveBeenCalledWith("Jane");
+    });
+  });
+
+  describe("registerWithId method", () => {
+    it("should register callback with unique ID", () => {
+      const callback = vi.fn();
+
+      const cleanup = store.registerWithId("name", "test-id", callback);
+      expect(typeof cleanup).toBe("function");
+
+      store.set({ name: "Jane" });
+      expect(callback).toHaveBeenCalledWith("Jane");
+    });
+
+    it("should prevent duplicate registration with same ID", () => {
+      const callback1 = vi.fn();
+      const callback2 = vi.fn();
+
+      // Register first callback with ID
+      store.registerWithId("name", "duplicate-test", callback1);
+
+      // Register second callback with same ID (should replace first)
+      store.registerWithId("name", "duplicate-test", callback2);
+
+      store.set({ name: "Jane" });
+
+      // Only second callback should be called
+      expect(callback1).not.toHaveBeenCalled();
+      expect(callback2).toHaveBeenCalledWith("Jane");
+    });
+
+    it("should handle React Strict Mode scenario with IDs", () => {
+      const callback = vi.fn();
+
+      // Simulate useEffect running twice in strict mode with same ID
+      const cleanup1 = store.registerWithId(
+        "name",
+        "strict-mode-test",
+        callback
+      );
+      const cleanup2 = store.registerWithId(
+        "name",
+        "strict-mode-test",
+        callback
+      );
+
+      // Only one callback should be registered
+      store.set({ name: "Jane" });
+      expect(callback).toHaveBeenCalledTimes(1);
+
+      // Both cleanup functions should work
+      cleanup1();
+      cleanup2(); // This should be safe to call
+
+      callback.mockClear();
+
+      // After cleanup, callback should not be called
+      store.set({ name: "Bob" });
+      expect(callback).not.toHaveBeenCalled();
+    });
+
+    it("should allow different IDs for same field", () => {
+      const callback1 = vi.fn();
+      const callback2 = vi.fn();
+
+      store.registerWithId("name", "id-1", callback1);
+      store.registerWithId("name", "id-2", callback2);
+
+      store.set({ name: "Jane" });
+
+      expect(callback1).toHaveBeenCalledWith("Jane");
+      expect(callback2).toHaveBeenCalledWith("Jane");
+    });
+
+    it("should return cleanup function that unregisters by ID", () => {
+      const callback1 = vi.fn();
+      const callback2 = vi.fn();
+
+      store.registerWithId("name", "cleanup-test-1", callback1);
+      const cleanup2 = store.registerWithId(
+        "name",
+        "cleanup-test-2",
+        callback2
+      );
+
+      // Test both callbacks work
+      store.set({ name: "Jane" });
+      expect(callback1).toHaveBeenCalledWith("Jane");
+      expect(callback2).toHaveBeenCalledWith("Jane");
+
+      // Cleanup second callback
+      cleanup2();
+
+      callback1.mockClear();
+      callback2.mockClear();
+
+      // Only first callback should work now
+      store.set({ name: "Bob" });
+      expect(callback1).toHaveBeenCalledWith("Bob");
+      expect(callback2).not.toHaveBeenCalled();
+    });
+
+    it("should handle replacing callback with same ID but different function", () => {
+      const callback1 = vi.fn();
+      const callback2 = vi.fn();
+
+      // Register first callback
+      store.registerWithId("name", "replaceable", callback1);
+
+      store.set({ name: "Test1" });
+      expect(callback1).toHaveBeenCalledWith("Test1");
+      expect(callback2).not.toHaveBeenCalled();
+
+      callback1.mockClear();
+
+      // Replace with second callback (same ID)
+      store.registerWithId("name", "replaceable", callback2);
+
+      store.set({ name: "Test2" });
+      expect(callback1).not.toHaveBeenCalled(); // Old callback shouldn't be called
+      expect(callback2).toHaveBeenCalledWith("Test2"); // New callback should be called
+    });
+  });
+
+  describe("unregisterById method", () => {
+    it("should unregister callback by ID", () => {
+      const callback = vi.fn();
+
+      store.registerWithId("name", "test-id", callback);
+
+      // Test callback works
+      store.set({ name: "Jane" });
+      expect(callback).toHaveBeenCalledWith("Jane");
+
+      // Unregister by ID
+      const result = store.unregisterById("name", "test-id");
+      expect(result).toBe(true);
+
+      callback.mockClear();
+
+      // Callback should not work after unregister
+      store.set({ name: "Bob" });
+      expect(callback).not.toHaveBeenCalled();
+    });
+
+    it("should return false when trying to unregister non-existent ID", () => {
+      const result = store.unregisterById("name", "non-existent");
+      expect(result).toBe(false);
+    });
+
+    it("should return false when trying to unregister from non-existent field", () => {
+      const result = store.unregisterById("nonExistent" as any, "test-id");
+      expect(result).toBe(false);
+    });
+
+    it("should handle unregistering specific ID while keeping others", () => {
+      const callback1 = vi.fn();
+      const callback2 = vi.fn();
+      const callback3 = vi.fn();
+
+      store.registerWithId("name", "keep-1", callback1);
+      store.registerWithId("name", "remove", callback2);
+      store.registerWithId("name", "keep-2", callback3);
+
+      // Test all callbacks work
+      store.set({ name: "Jane" });
+      expect(callback1).toHaveBeenCalledWith("Jane");
+      expect(callback2).toHaveBeenCalledWith("Jane");
+      expect(callback3).toHaveBeenCalledWith("Jane");
+
+      // Remove middle callback by ID
+      store.unregisterById("name", "remove");
+
+      callback1.mockClear();
+      callback2.mockClear();
+      callback3.mockClear();
+
+      // Test remaining callbacks still work
+      store.set({ name: "Bob" });
+      expect(callback1).toHaveBeenCalledWith("Bob");
+      expect(callback2).not.toHaveBeenCalled();
+      expect(callback3).toHaveBeenCalledWith("Bob");
+    });
+  });
+
+  describe("unregister method", () => {
+    it("should unregister specific callback", () => {
+      const callback1 = vi.fn();
+      const callback2 = vi.fn();
+
+      store.register("name", callback1);
+      store.register("name", callback2);
+
+      // Test both callbacks work
+      store.set({ name: "Jane" });
+      expect(callback1).toHaveBeenCalledWith("Jane");
+      expect(callback2).toHaveBeenCalledWith("Jane");
+
+      // Unregister first callback
+      const result = store.unregister("name", callback1);
+      expect(result).toBe(true);
+
+      callback1.mockClear();
+      callback2.mockClear();
+
+      // Test only second callback is called
+      store.set({ name: "Bob" });
+      expect(callback1).not.toHaveBeenCalled();
+      expect(callback2).toHaveBeenCalledWith("Bob");
+    });
+
+    it("should return false when trying to unregister non-existent callback", () => {
+      const callback = vi.fn();
+
+      const result = store.unregister("name", callback);
+      expect(result).toBe(false);
+    });
+
+    it("should return false when trying to unregister from non-existent field", () => {
+      const callback = vi.fn();
+
+      const result = store.unregister("nonExistent" as any, callback);
+      expect(result).toBe(false);
+    });
+
+    it("should handle unregistering already unregistered callback", () => {
+      const callback = vi.fn();
+
+      store.register("name", callback);
+
+      // First unregister should succeed
+      const result1 = store.unregister("name", callback);
+      expect(result1).toBe(true);
+
+      // Second unregister should fail
+      const result2 = store.unregister("name", callback);
+      expect(result2).toBe(false);
+    });
+
+    it("should handle multiple unregistrations correctly", () => {
+      const callback1 = vi.fn();
+      const callback2 = vi.fn();
+      const callback3 = vi.fn();
+
+      store.register("name", callback1);
+      store.register("name", callback2);
+      store.register("name", callback3);
+
+      // Test all callbacks work
+      store.set({ name: "Jane" });
+      expect(callback1).toHaveBeenCalledWith("Jane");
+      expect(callback2).toHaveBeenCalledWith("Jane");
+      expect(callback3).toHaveBeenCalledWith("Jane");
+
+      // Unregister middle callback
+      store.unregister("name", callback2);
+
+      callback1.mockClear();
+      callback2.mockClear();
+      callback3.mockClear();
+
+      // Test remaining callbacks still work
+      store.set({ name: "Bob" });
+      expect(callback1).toHaveBeenCalledWith("Bob");
+      expect(callback2).not.toHaveBeenCalled();
+      expect(callback3).toHaveBeenCalledWith("Bob");
+    });
   });
 
   describe("derived method", () => {
@@ -710,6 +1127,102 @@ describe("FieldStore", () => {
       derivedStore.set({ name: "jane", age: 16 });
       expect(derivedStore.get("upperName")).toBe("JANE");
       expect(derivedStore.get("ageGroup")).toBe("minor");
+    });
+  });
+
+  describe("function hashing for duplicate prevention", () => {
+    it("should generate consistent hashes for identical functions", () => {
+      // Create identical functions
+      const createIdenticalCallback = () => (value: string) => {
+        console.log(`Value: ${value}`);
+      };
+
+      const callback1 = createIdenticalCallback();
+      const callback2 = createIdenticalCallback();
+
+      // Register both - second should replace first due to identical hash
+      store.register("name", callback1);
+      store.register("name", callback2);
+
+      // Mock both callbacks to track calls
+      const mockCallback1 = vi.fn(callback1);
+      const mockCallback2 = vi.fn(callback2);
+
+      // Replace the registered callbacks with mocked versions for testing
+      // Since they have the same hash, only one should be active
+      store.register("name", mockCallback1);
+      store.register("name", mockCallback2); // This should replace mockCallback1
+
+      store.set({ name: "test" });
+
+      // Only the last registered callback should be called
+      expect(mockCallback1).not.toHaveBeenCalled();
+      expect(mockCallback2).toHaveBeenCalledWith("test");
+    });
+
+    it("should generate different hashes for different functions", () => {
+      const callback1 = vi.fn((value: string) => {
+        console.log(`Hello: ${value}`);
+      });
+
+      const callback2 = vi.fn((value: string) => {
+        console.log(`Goodbye: ${value}`);
+      });
+
+      store.register("name", callback1);
+      store.register("name", callback2);
+
+      store.set({ name: "test" });
+
+      // Both should be called since they have different hashes
+      expect(callback1).toHaveBeenCalledWith("test");
+      expect(callback2).toHaveBeenCalledWith("test");
+    });
+
+    it("should handle closure variables correctly", () => {
+      const prefix1 = "Hello";
+      const prefix2 = "Hello"; // Same value
+
+      const callback1 = vi.fn((value: string) => {
+        console.log(`${prefix1}: ${value}`);
+      });
+
+      const callback2 = vi.fn((value: string) => {
+        console.log(`${prefix2}: ${value}`);
+      });
+
+      store.register("name", callback1);
+      store.register("name", callback2);
+
+      store.set({ name: "test" });
+
+      // These should be considered different because they reference different variables
+      // Both callbacks should be called since they have different function bodies
+      expect(callback1).toHaveBeenCalledWith("test");
+      expect(callback2).toHaveBeenCalledWith("test");
+    });
+
+    it("should differentiate functions with different closure variables", () => {
+      const prefix1 = "Hello";
+      const prefix2 = "Goodbye";
+
+      const callback1 = vi.fn((value: string) => {
+        console.log(`${prefix1}: ${value}`);
+      });
+
+      const callback2 = vi.fn((value: string) => {
+        console.log(`${prefix2}: ${value}`);
+      });
+
+      store.register("name", callback1);
+      store.register("name", callback2);
+
+      store.set({ name: "test" });
+
+      // These should be considered different due to different closure variables
+      // Both should be called
+      expect(callback1).toHaveBeenCalledWith("test");
+      expect(callback2).toHaveBeenCalledWith("test");
     });
   });
 

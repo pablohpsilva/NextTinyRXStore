@@ -9,7 +9,7 @@ NextTinyRXStore combines the power of RxJS with React's latest hooks to deliver 
 - 🔥 **Universal Hooks** - Same API works on server and client
 - ⚡ **Zero Config SSR** - Perfect Next.js App Router integration
 - 🧠 **Smart Re-rendering** - Only updates when data actually changes
-- 💾 **Memory Optimized** - Granular cache invalidation and WeakMap garbage collection
+- 💾 **Memory Optimized** - Granular cache invalidation and efficient Map-based caching
 - 🎯 **Type-Safe** - Full TypeScript support with intelligent inference
 - 📦 **Tiny Bundle** - Minimal overhead, maximum performance
 - 🔧 **Great DX** - Auto-generated setters, derived fields, and more
@@ -62,7 +62,6 @@ export default function HomePage() {
   // ✨ Works perfectly on the server!
   const userName = userStore.get("name");
   const userAge = userStore.get("age");
-  userStore.setters.setName("Cat");
 
   // Initialize server-side data
   userStore.set({
@@ -89,8 +88,14 @@ Whenever the client needs to either read or write on the store:
 import { userStore } from "../store/userStore";
 
 export default function UserProfile() {
+  // You have atomic changes only on what matters!
+  // const name = userStore.useField('name')
+  // or
+  const { name, age, email } = userStore.useFields(["name", "age", "email"]);
+
   // ✨ Universal hook - works on server AND client!
-  const { name, age, email } = userStore.useStore();
+  // This one your component will react to the entire store.
+  // const { name, age, email } = userStore.useStore();
 
   return (
     <div>
@@ -364,10 +369,11 @@ store.set({ name: "New Name" }); // Only 'name' caches cleared
 
 ### Memory-Efficient Design
 
-- **WeakMap caching** for automatic garbage collection
+- **Granular cache invalidation** - only affected caches are cleared
 - **Per-field versioning** instead of global invalidation
-- **Shallow equality checks** to prevent object recreation
+- **Shallow equality checks** to prevent unnecessary object recreation
 - **RxJS operators** like `distinctUntilChanged` for stream optimization
+- **Efficient Map-based caching** with smart invalidation strategies
 
 ## 🛠️ Development
 

@@ -1,7 +1,11 @@
 export type Subscriber<T> = (val: T) => void;
 
-export interface SnapshotCacheEntry {
+export interface SnapshotCacheEntry<TValue = unknown> {
   version: number;
-  result: any;
-  fn: () => any;
+  result: TValue;
+  fn: () => TValue;
 }
+
+export type CallbackWithId = Function & {
+  __callbackId?: string;
+};

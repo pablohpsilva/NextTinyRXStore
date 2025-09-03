@@ -20,7 +20,12 @@ export function shallowEqual<T>(a: T, b: T): boolean {
   if (keysA.length !== keysB.length) return false;
 
   for (const key of keysA) {
-    if (!Object.is((a as any)[key], (b as any)[key])) {
+    if (
+      !Object.is(
+        (a as Record<string, unknown>)[key],
+        (b as Record<string, unknown>)[key]
+      )
+    ) {
       return false;
     }
   }
