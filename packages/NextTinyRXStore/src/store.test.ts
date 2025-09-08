@@ -1,6 +1,10 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
-import { BehaviorSubject, combineLatest } from "rxjs";
-import { distinctUntilChanged, map } from "rxjs/operators";
+import {
+  BehaviorSubject,
+  combineLatest,
+  distinctUntilChanged,
+  map,
+} from "./reactive";
 import { FieldStore } from "./store";
 import { shallowEqual } from "./utils";
 
@@ -358,8 +362,6 @@ describe("FieldStore", () => {
       expect(() => subscription.unsubscribe()).not.toThrow();
     });
 
-
-
     it("should handle React unavailable error by testing error condition directly", () => {
       // We'll test this by temporarily modifying the store's hook logic
       // Since we can't easily mock React in this context, let's verify
@@ -383,8 +385,6 @@ describe("FieldStore", () => {
       );
     });
   });
-
-
 
   describe("register method", () => {
     it("should register callback for field changes", () => {

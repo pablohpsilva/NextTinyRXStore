@@ -1,5 +1,9 @@
-import { BehaviorSubject, combineLatest } from "rxjs";
-import { distinctUntilChanged, map } from "rxjs/operators";
+import {
+  BehaviorSubject,
+  combineLatest,
+  distinctUntilChanged,
+  map,
+} from "./reactive";
 
 import type { CallbackWithId } from "./types";
 import { isServer, shallowEqual } from "./utils";
