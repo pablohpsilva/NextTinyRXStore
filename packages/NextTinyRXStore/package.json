@@ -1,6 +1,6 @@
 {
   "name": "next-tiny-rx-store",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "A tiny, performant reactive state management library for Next.js with SSR support and zero dependencies",
   "author": "Pablo Silva",
   "license": "MIT",
