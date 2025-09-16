@@ -6,7 +6,7 @@ NextTinyRXStore delivers lightning-fast reactive state management that works sea
 
 ## 🌐 **Live Demo**
 
-**[🚀 Try NextTinyRXStore Live Examples](https://pablohpsilva.github.io/NextTinyRXStore/)**
+**[🚀 Try NextTinyRXStore Live Examples](https://next-tiny-rx-store-web.vercel.app/)**
 
 Explore interactive examples showcasing:
 
