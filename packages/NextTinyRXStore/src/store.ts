@@ -25,6 +25,10 @@ export class FieldStore<T extends Record<string, unknown>> {
   private cache: Record<string, CacheEntry> = {};
   private _fieldVersions: Record<string, number> = {};
 
+  // React-specific resource management
+  private _subscriptionCache = new Map<string, () => void>();
+  private _activeReactSubscriptions = new WeakMap<object, Set<() => void>>();
+
   constructor(initialState: T) {
     this.subjects = {} as { [K in keyof T]: BehaviorSubject<T[K]> };
     this.setters = {} as typeof this.setters;
@@ -35,15 +39,15 @@ export class FieldStore<T extends Record<string, unknown>> {
 
       // Create subject
       (this.subjects as unknown as Record<string, BehaviorSubject<unknown>>)[
-        String(key)
+        `${key}`
       ] = new BehaviorSubject(value) as unknown as BehaviorSubject<unknown>;
 
       // Initialize field version
-      this._fieldVersions[String(key)] = 0;
+      this._fieldVersions[`${key}`] = 0;
 
       // Create setter
       const setterName = `set${
-        String(key).charAt(0).toUpperCase() + String(key).slice(1)
+        `${key}`.charAt(0).toUpperCase() + `${key}`.slice(1)
       }` as keyof typeof this.setters;
       (this.setters as unknown as Record<string, (val: T[keyof T]) => void>)[
         setterName
@@ -94,19 +98,103 @@ export class FieldStore<T extends Record<string, unknown>> {
       const key = changedKeys[i];
       const newVal = partial[key]!;
       this.subjects[key].next(newVal);
-
-      const callbacks = this.callbacks[key as keyof T];
-      if (callbacks) {
-        for (let j = 0; j < callbacks.length; j++) {
-          (callbacks[j] as (val: typeof newVal) => void)(newVal);
-        }
-      }
+      this._triggerCallbacks(key, newVal);
     }
   }
 
   /** Subscribe to a single field */
   observable<K extends keyof T>(key: K): BehaviorSubject<T[K]> {
     return this.subjects[key];
+  }
+
+  /** Trigger callbacks for a specific key */
+  private _triggerCallbacks<K extends keyof T>(key: K, newVal: T[K]): void {
+    const callbacks = this.callbacks[key as keyof T];
+    if (!callbacks) return;
+
+    for (let i = 0; i < callbacks.length; i++) {
+      (callbacks[i] as (val: typeof newVal) => void)(newVal);
+    }
+  }
+
+  /** Generic method to create and cache subscription functions */
+  private _getCachedSubscription(
+    cacheKey: string,
+    subscriptionFactory: () => (listener: () => void) => () => void
+  ): (listener: () => void) => () => void {
+    if (!this._subscriptionCache.has(cacheKey)) {
+      this._subscriptionCache.set(cacheKey, subscriptionFactory() as any);
+    }
+    return this._subscriptionCache.get(cacheKey) as any;
+  }
+
+  /** Create stable subscription function for React hooks */
+  private _getStableSubscription<K extends keyof T>(
+    key: K
+  ): (listener: () => void) => () => void {
+    const cacheKey = `single:${String(key)}`;
+
+    return this._getCachedSubscription(
+      cacheKey,
+      () => (listener: () => void) => {
+        const sub = this.subjects[key]
+          .pipe(distinctUntilChanged(Object.is))
+          .subscribe(() => listener());
+        return () => sub.unsubscribe();
+      }
+    );
+  }
+
+  /** Create stable subscription function for multiple fields */
+  private _getStableMultiSubscription<K extends keyof T>(
+    keys: K[]
+  ): (listener: () => void) => () => void {
+    const sortedKeys = keys.slice().sort();
+    const cacheKey = `multi:${sortedKeys.map((k) => String(k)).join(",")}`;
+
+    return this._getCachedSubscription(
+      cacheKey,
+      () => (listener: () => void) => {
+        const observables = [];
+        for (let i = 0; i < keys.length; i++) {
+          observables.push(
+            this.subjects[keys[i]].pipe(distinctUntilChanged(Object.is))
+          );
+        }
+
+        const sub = combineLatest(observables)
+          .pipe(
+            map(() => this._buildServerSideResult(keys)),
+            distinctUntilChanged(shallowEqual)
+          )
+          .subscribe(() => listener());
+        return () => sub.unsubscribe();
+      }
+    );
+  }
+
+  /** Register React component for cleanup tracking */
+  private _registerReactComponent(): object {
+    const componentRef = {};
+    this._activeReactSubscriptions.set(componentRef, new Set());
+    return componentRef;
+  }
+
+  /** Track subscription for React component cleanup */
+  private _trackReactSubscription(
+    componentRef: object,
+    cleanup: () => void
+  ): () => void {
+    const subscriptions = this._activeReactSubscriptions.get(componentRef);
+    if (subscriptions) {
+      subscriptions.add(cleanup);
+
+      return () => {
+        cleanup();
+        subscriptions.delete(cleanup);
+      };
+    }
+    return cleanup;
   }
 
   /** Serialize current state for SSR */
@@ -180,10 +268,7 @@ export class FieldStore<T extends Record<string, unknown>> {
         version: 0,
         snapshot: () => {
           // Create new result and compare with cached
-          const newResult = {} as Pick<T, K>;
-          for (let i = 0; i < keys.length; i++) {
-            newResult[keys[i]] = this.get(keys[i]);
-          }
+          const newResult = this._buildServerSideResult(keys);
 
           // Only update cached result if values changed
           if (!cachedResult || !shallowEqual(cachedResult, newResult)) {
@@ -199,80 +284,84 @@ export class FieldStore<T extends Record<string, unknown>> {
     return entry.snapshot as () => Pick<T, K>;
   }
 
+  /** Common React hook logic to eliminate duplication */
+  private _useReactHook<TResult>(
+    subscribe: (listener: () => void) => () => void,
+    getSnapshot: () => TResult
+  ): TResult {
+    // @ts-ignore - Safe since we check isServer first
+    const { useSyncExternalStore, useRef, useEffect } = require("react");
+
+    if (!useSyncExternalStore) {
+      throw new Error(
+        "React not available. Make sure you're using this in a React component."
+      );
+    }
+
+    // Create stable component reference for cleanup tracking
+    const componentRef = useRef(null);
+    if (!componentRef.current) {
+      componentRef.current = this._registerReactComponent();
+    }
+
+    // Enhanced subscribe function with cleanup tracking
+    const subscribeWithTracking = (listener: () => void) => {
+      const cleanup = subscribe(listener);
+      return this._trackReactSubscription(componentRef.current!, cleanup);
+    };
+
+    // Cleanup on unmount
+    useEffect(() => {
+      return () => {
+        const subscriptions = this._activeReactSubscriptions.get(
+          componentRef.current!
+        );
+        if (subscriptions) {
+          subscriptions.forEach((cleanup) => cleanup());
+          subscriptions.clear();
+          this._activeReactSubscriptions.delete(componentRef.current!);
+        }
+      };
+    }, []);
+
+    return useSyncExternalStore(
+      subscribeWithTracking,
+      getSnapshot,
+      getSnapshot
+    );
+  }
+
   /** Universal hook: single field (works on both server and client) */
   useField<K extends keyof T>(key: K): T[K] {
     if (isServer) {
       return this.get(key);
     }
 
-    // @ts-ignore - Safe since we check isServer first
-    const { useSyncExternalStore } = require("react");
-
-    if (!useSyncExternalStore) {
-      throw new Error(
-        "React not available. Make sure you're using this in a React component."
-      );
-    }
-
+    const subscribe = this._getStableSubscription(key);
     const getSnapshot = this.getSnapshotField(key);
-    return useSyncExternalStore(
-      (listener: () => void) => {
-        const sub = this.subjects[key]
-          .pipe(distinctUntilChanged(Object.is))
-          .subscribe(() => listener());
-        return () => sub.unsubscribe();
-      },
-      getSnapshot,
-      getSnapshot
-    );
+
+    return this._useReactHook(subscribe, getSnapshot);
+  }
+
+  /** Build server-side result for multiple fields */
+  private _buildServerSideResult<K extends keyof T>(keys: K[]): Pick<T, K> {
+    const result = {} as Pick<T, K>;
+    for (let i = 0; i < keys.length; i++) {
+      result[keys[i]] = this.get(keys[i]);
+    }
+    return result;
   }
 
   /** Universal hook: multiple fields (works on both server and client) */
   useFields<K extends keyof T>(keys: K[]): Pick<T, K> {
     if (isServer) {
-      const result = {} as Pick<T, K>;
-      for (let i = 0; i < keys.length; i++) {
-        result[keys[i]] = this.get(keys[i]);
-      }
-      return result;
+      return this._buildServerSideResult(keys);
     }
 
-    // @ts-ignore - Safe since we check isServer first
-    const { useSyncExternalStore } = require("react");
-
-    if (!useSyncExternalStore) {
-      throw new Error(
-        "React not available. Make sure you're using this in a React component."
-      );
-    }
-
+    const subscribe = this._getStableMultiSubscription(keys);
     const getSnapshot = this.getSnapshotFields(keys);
-    return useSyncExternalStore(
-      (listener: () => void) => {
-        const observables = [];
-        for (let i = 0; i < keys.length; i++) {
-          observables.push(
-            this.subjects[keys[i]].pipe(distinctUntilChanged(Object.is))
-          );
-        }
 
-        const sub = combineLatest(observables)
-          .pipe(
-            map(() => {
-              const result = {} as Pick<T, K>;
-              for (let i = 0; i < keys.length; i++) {
-                result[keys[i]] = this.get(keys[i]);
-              }
-              return result;
-            }),
-            distinctUntilChanged(shallowEqual)
-          )
-          .subscribe(() => listener());
-        return () => sub.unsubscribe();
-      },
-      getSnapshot,
-      getSnapshot
-    );
+    return this._useReactHook(subscribe, getSnapshot);
   }
 
   /** Universal hook: entire store (works on both server and client) */
@@ -327,19 +416,29 @@ export class FieldStore<T extends Record<string, unknown>> {
     return () => this.unregisterById(key, id);
   }
 
-  /** Unregister callback by ID */
-  unregisterById<K extends keyof T>(key: K, id: string): boolean {
+  /** Generic callback removal helper */
+  private _removeCallback<K extends keyof T>(
+    key: K,
+    predicate: (callback: CallbackWithId, index: number) => boolean
+  ): boolean {
     const callbacksArray = this.callbacks[key];
     if (!callbacksArray) return false;
 
     for (let i = 0; i < callbacksArray.length; i++) {
-      if (callbacksArray[i].__callbackId === id) {
+      if (predicate(callbacksArray[i], i)) {
         callbacksArray.splice(i, 1);
         return true;
       }
     }
-
     return false;
+  }
+
+  /** Unregister callback by ID */
+  unregisterById<K extends keyof T>(key: K, id: string): boolean {
+    return this._removeCallback(
+      key,
+      (callback) => callback.__callbackId === id
+    );
   }
 
   /** Unregister a specific callback */
@@ -347,18 +446,8 @@ export class FieldStore<T extends Record<string, unknown>> {
     key: K,
     callback: (val: T[K]) => void
   ): boolean {
-    const callbacksArray = this.callbacks[key];
-    if (!callbacksArray) return false;
-
     const typedCallback = callback as CallbackWithId;
-    for (let i = 0; i < callbacksArray.length; i++) {
-      if (callbacksArray[i] === typedCallback) {
-        callbacksArray.splice(i, 1);
-        return true;
-      }
-    }
-
-    return false;
+    return this._removeCallback(key, (cb) => cb === typedCallback);
   }
 
   /** Derived/computed field */
@@ -388,11 +477,7 @@ export class FieldStore<T extends Record<string, unknown>> {
     newStore._fieldVersions[key] = 0;
 
     combineLatest(depSubjects).subscribe(() => {
-      const values = {} as Pick<T, (typeof deps)[number]>;
-      for (let i = 0; i < deps.length; i++) {
-        values[deps[i]] = this.get(deps[i]);
-      }
-
+      const values = this._buildServerSideResult(deps);
       const newVal = compute(values);
       const currentVal = derived$.getValue();
 
@@ -412,5 +497,14 @@ export class FieldStore<T extends Record<string, unknown>> {
     (newStore.subjects as unknown as Record<string, BehaviorSubject<D>>)[key] =
       derived$;
     return newStore;
+  }
+
+  /** Clear subscription cache and React resources (for testing/cleanup) */
+  _clearReactResources(): void {
+    this._subscriptionCache.clear();
+
+    // Note: WeakMap doesn't support iteration, so we can only clear the reference
+    // The garbage collector will handle cleanup when components are destroyed
+    this._activeReactSubscriptions = new WeakMap();
   }
 }
