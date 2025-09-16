@@ -56,7 +56,7 @@ export const sampleProducts: Omit<CartItem, "quantity">[] = [
   { id: "1", name: "TypeScript Book", price: 29.99 },
   { id: "2", name: "React Hooks Guide", price: 19.99 },
   { id: "3", name: "Next.js Manual", price: 39.99 },
-  { id: "4", name: "RxJS Cookbook", price: 24.99 },
+  { id: "4", name: "State Management Guide", price: 24.99 },
 ];
 
 export const loggerStore = createFieldStore({

@@ -55,9 +55,9 @@ export default function SideEffectsDemo() {
     );
     const emailCleanup = userStore.register("email", emailCallback(addLog));
 
-    // Set up RxJS observable subscription
+    // Set up observable subscription
     subscriptionRef.current = userStore.observable("name").subscribe((name) => {
-      addLog(`📡 RxJS Observable: Name is now "${name}"`);
+      addLog(`📡 Observable: Name is now "${name}"`);
     });
 
     // Initial document title
@@ -74,7 +74,7 @@ export default function SideEffectsDemo() {
 
       if (subscriptionRef.current) {
         subscriptionRef.current.unsubscribe();
-        addLog("🧹 RxJS subscription cleaned up");
+        addLog("🧹 Observable subscription cleaned up");
       }
       document.title = "NextTinyRXStore"; // Reset title
     };
@@ -250,7 +250,7 @@ const cleanup = userStore.register("age", (newAge) => {
   }
 });
 
-// RxJS observable
+// Observable
 userStore.observable("name").subscribe((name) => {
   document.title = \`Welcome, \${name}!\`;
 });
