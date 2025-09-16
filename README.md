@@ -4,6 +4,20 @@
 
 NextTinyRXStore delivers lightning-fast reactive state management that works seamlessly on both server and client. Built with custom reactive primitives for maximum performance and minimal bundle size. No more hydration mismatches, no more external dependencies, just pure reactive bliss.
 
+## 🌐 **Live Demo**
+
+**[🚀 Try NextTinyRXStore Live Examples](https://pablohpsilva.github.io/NextTinyRXStore/)**
+
+Explore interactive examples showcasing:
+
+- Basic usage patterns
+- Derived fields and computed values
+- Multi-field reactivity
+- Shopping cart implementation
+- Side effects and async operations
+- SSR compatibility demos
+- Performance optimizations
+
 ## ✨ What Makes It Shine
 
 - 🔥 **Universal Hooks** - Same API works on server and client

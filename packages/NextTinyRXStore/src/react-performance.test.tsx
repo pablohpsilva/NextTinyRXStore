@@ -19,7 +19,7 @@ try {
     // Simulate the component rendering by calling its function
     if (typeof component.type === "function") {
       try {
-        component.type(component.props);
+        (component.type as any)(component.props);
       } catch (error) {
         // Ignore hook errors in test environment
       }
