@@ -74,8 +74,12 @@ export class BehaviorSubject<T> extends SimpleObservable<T> {
         return () => {};
       }
 
-      // Add observer to the list
-      this._observers.push(observer);
+      // Check for duplicate observer to prevent memory waste
+      const existingIndex = this._observers.indexOf(observer);
+      if (existingIndex === -1) {
+        // Only add if not already present
+        this._observers.push(observer);
+      }
 
       // Emit current value immediately (BehaviorSubject characteristic)
       try {
@@ -182,7 +186,7 @@ export function combineLatest<T extends readonly unknown[]>(
     const hasEmitted = new Array(length).fill(false);
     let hasAllEmitted = false;
 
-    const subscriptions: Subscription[] = [];
+    const subscriptions: Subscription[] = new Array(length);
 
     // Subscribe to each source
     sources.forEach((source, index) => {
@@ -204,7 +208,7 @@ export function combineLatest<T extends readonly unknown[]>(
         }
       });
 
-      subscriptions.push(subscription);
+      subscriptions[index] = subscription;
     });
 
     // Return cleanup function
