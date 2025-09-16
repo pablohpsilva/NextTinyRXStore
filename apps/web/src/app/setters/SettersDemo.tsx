@@ -1,5 +1,5 @@
 "use client";
-import { createFieldStore } from "@repo/next-tiny-rx-store";
+import { createFieldStore } from "next-tiny-rx-store";
 
 // Create a demo store for this page
 const demoUserStore = createFieldStore({

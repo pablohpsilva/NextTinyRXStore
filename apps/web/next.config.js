@@ -1,7 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
-  transpilePackages: ["@repo/next-tiny-rx-store"],
+  transpilePackages: ["next-tiny-rx-store"],
 
   // Enable static export for GitHub Pages
   output: "export",

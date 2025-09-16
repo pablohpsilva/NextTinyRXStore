@@ -20,8 +20,8 @@
     ],
     "baseUrl": ".",
     "paths": {
-      "@repo/next-tiny-rx-store": ["./packages/NextTinyRXStore/src"],
-      "@repo/next-tiny-rx-store/*": ["./packages/NextTinyRXStore/src/*"]
+      "next-tiny-rx-store": ["./packages/NextTinyRXStore/src"],
+      "next-tiny-rx-store/*": ["./packages/NextTinyRXStore/src/*"]
     }
   },
   "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],

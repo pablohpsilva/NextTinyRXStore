@@ -64,7 +64,7 @@ export default function BasicUsagePage() {
             </h3>
             <pre className="text-sm text-gray-700 dark:text-gray-300 overflow-x-auto">
               {`// store/demoStores.ts
-import { createFieldStore } from "@repo/next-tiny-rx-store";
+import { createFieldStore } from "next-tiny-rx-store";
 
 export const userStore = createFieldStore({
   name: "Alice",

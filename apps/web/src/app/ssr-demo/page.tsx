@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { initializeServerStore } from "@repo/next-tiny-rx-store";
+import { initializeServerStore } from "next-tiny-rx-store";
 import { userStore } from "../../store/demoStores";
 import SSRUserProfile from "./SSRUserProfile";
 

@@ -1,4 +1,4 @@
-import { createFieldStore } from "@repo/next-tiny-rx-store";
+import { createFieldStore } from "next-tiny-rx-store";
 
 // Basic user store from README example
 export const userStore = createFieldStore({
