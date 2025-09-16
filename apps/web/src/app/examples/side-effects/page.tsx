@@ -18,7 +18,7 @@ export default function SideEffectsPage() {
           🔔 Side Effects & Callbacks
         </h1>
         <p className="text-center text-gray-600 dark:text-gray-300 mb-12">
-          Register callbacks and work with RxJS observables directly
+          Register callbacks and work with observables directly
         </p>
 
         {/* Interactive Demo */}
@@ -89,10 +89,10 @@ userStore.register("name", (name) => {
             </pre>
           </div>
 
-          {/* RxJS Observables */}
+          {/* Observables */}
           <div className="bg-gray-100 dark:bg-gray-800 rounded-lg p-6">
             <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white">
-              RxJS Observables
+              Observables
             </h3>
             <pre className="text-sm text-gray-700 dark:text-gray-300 overflow-x-auto">
               {`// Direct observable access
@@ -100,7 +100,7 @@ userStore.observable("name").subscribe((name) => {
   document.title = \`Welcome, \${name}!\`;
 });
 
-// Advanced RxJS operations
+// Advanced observable operations
 userStore.observable("age")
   .pipe(
     filter(age => age >= 18),
@@ -119,8 +119,8 @@ userStore.observable("age")
               Complex Side Effects Example
             </h3>
             <pre className="text-sm text-gray-700 dark:text-gray-300 overflow-x-auto">
-              {`import { combineLatest } from "rxjs";
-import { debounceTime, distinctUntilChanged } from "rxjs/operators";
+              {`import { combineLatest } from "next-tiny-rx-store";
+import { debounceTime, distinctUntilChanged } from "next-tiny-rx-store";
 
 // Combine multiple observables for complex side effects
 combineLatest([
@@ -171,9 +171,7 @@ combineLatest([
               <h4 className="font-semibold mb-2">Error Handling:</h4>
               <ul className="list-disc list-inside space-y-1 text-sm">
                 <li>Wrap side effects in try-catch blocks</li>
-                <li>
-                  Use RxJS <code>catchError</code> operator
-                </li>
+                <li>Use built-in error handling</li>
                 <li>Log errors appropriately for debugging</li>
               </ul>
             </div>

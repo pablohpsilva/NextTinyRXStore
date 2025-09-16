@@ -112,7 +112,7 @@ export default function ExamplesPage() {
               🔔 Side Effects & Callbacks
             </h3>
             <p className="text-gray-600 dark:text-gray-300 text-sm">
-              Register callbacks and work with RxJS observables directly
+              Register callbacks and work with observables directly
             </p>
           </Link>
 

@@ -3,7 +3,7 @@ import commonjs from "@rollup/plugin-commonjs";
 import typescript from "@rollup/plugin-typescript";
 import terser from "@rollup/plugin-terser";
 
-const external = ["react", "rxjs", "rxjs/operators"];
+const external = ["react"];
 
 const createConfig = (format, minify = false) => ({
   input: "src/index.ts",
@@ -16,8 +16,6 @@ const createConfig = (format, minify = false) => ({
     name: format === "umd" ? "NextTinyRXStore" : undefined,
     globals: {
       react: "React",
-      rxjs: "rxjs",
-      "rxjs/operators": "rxjs.operators",
     },
     sourcemap: true,
   },
@@ -53,8 +51,6 @@ export default [
       name: "NextTinyRXStore",
       globals: {
         react: "React",
-        rxjs: "rxjs",
-        "rxjs/operators": "rxjs.operators",
       },
       sourcemap: true,
     },

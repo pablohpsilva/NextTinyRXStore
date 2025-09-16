@@ -1,6 +1,10 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
-import { BehaviorSubject, combineLatest } from "rxjs";
-import { distinctUntilChanged, map } from "rxjs/operators";
+import {
+  BehaviorSubject,
+  combineLatest,
+  distinctUntilChanged,
+  map,
+} from "./reactive";
 import { FieldStore } from "./store";
 import { shallowEqual } from "./utils";
 
@@ -337,7 +341,7 @@ describe("FieldStore", () => {
     });
 
     it("should test client-side hook paths by directly calling subscription functions", () => {
-      // Test the RxJS subscription logic directly by simulating React hook behavior
+      // Test the subscription logic directly by simulating React hook behavior
 
       // Test useField subscription logic - COVERS LINES 234-239
       const nameObservable = store.observable("name");
@@ -357,8 +361,6 @@ describe("FieldStore", () => {
       // Test cleanup
       expect(() => subscription.unsubscribe()).not.toThrow();
     });
-
-
 
     it("should handle React unavailable error by testing error condition directly", () => {
       // We'll test this by temporarily modifying the store's hook logic
@@ -383,8 +385,6 @@ describe("FieldStore", () => {
       );
     });
   });
-
-
 
   describe("register method", () => {
     it("should register callback for field changes", () => {
@@ -1097,7 +1097,7 @@ describe("FieldStore", () => {
   });
 
   describe("memory management and cache behavior", () => {
-    it("should manage subscription cleanup through RxJS observables", () => {
+    it("should manage subscription cleanup through observables", () => {
       const nameObservable = store.observable("name");
       let subscriptionCalled = false;
 

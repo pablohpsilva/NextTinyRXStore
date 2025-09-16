@@ -79,7 +79,8 @@ export default function MultiFieldPage() {
           <ul className="list-disc list-inside space-y-2 text-blue-700 dark:text-blue-300">
             <li>Only re-renders if subscribed fields actually change</li>
             <li>
-              Uses RxJS <code>distinctUntilChanged</code> with shallow equality
+              Uses custom <code>distinctUntilChanged</code> with shallow
+              equality
             </li>
             <li>
               Combines multiple observables efficiently with{" "}
@@ -115,7 +116,7 @@ function UserInfo() {
               Behind the Scenes
             </h3>
             <pre className="text-sm text-gray-700 dark:text-gray-300 overflow-x-auto">
-              {`// Internally uses RxJS optimization:
+              {`// Internally uses reactive optimization:
 combineLatest(
   keys.map(k => 
     store.subjects[k].pipe(
