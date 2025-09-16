@@ -24,7 +24,7 @@ NextTinyRXStore is truly **tiny** and optimized for production with **zero depen
 - **UMD (Browser)**: 6.7 KB (2.4 KB gzipped)
 - **TypeScript definitions**: Included
 - **Tree-shakeable**: Import only what you need
-- **Zero dependencies**: No RxJS or other external libraries required
+- **Zero dependencies**: No external libraries required
 
 _For comparison: Zustand is ~4.1KB gzipped + dependencies, Redux Toolkit is ~23KB gzipped + dependencies_
 
@@ -46,9 +46,9 @@ yarn add next-tiny-rx-store
 
 NextTinyRXStore achieves true zero dependencies by implementing custom reactive primitives instead of relying on external libraries:
 
-- ✅ **No RxJS dependency** - Custom `BehaviorSubject`, `combineLatest`, `distinctUntilChanged`, and `map`
+- ✅ **Custom reactive primitives** - Built-in `BehaviorSubject`, `combineLatest`, `distinctUntilChanged`, and `map` implementations
 - ✅ **No utility libraries** - All functionality built from scratch
-- ✅ **Smaller total bundle** - 85% smaller than equivalent RxJS-based solutions
+- ✅ **Smaller total bundle** - Optimized for minimal overhead
 - ✅ **No version conflicts** - Your app controls all dependencies
 - ✅ **Better tree-shaking** - Only the exact code you use is included
 
@@ -388,7 +388,7 @@ store.set({ name: "New Name" }); // Only 'name' caches cleared
 - **Shallow equality checks** to prevent unnecessary object recreation
 - **Custom reactive operators** like `distinctUntilChanged` for stream optimization
 - **Efficient Map-based caching** with smart invalidation strategies
-- **Zero external dependencies** - no RxJS overhead
+- **Zero external dependencies** - minimal overhead
 
 ## 🛠️ Development
 

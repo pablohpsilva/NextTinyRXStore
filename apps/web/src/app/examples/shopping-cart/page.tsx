@@ -151,7 +151,7 @@ const { discountCode, hasDiscount } = cartStore.useFields([
               <ul className="list-disc list-inside space-y-1 text-sm">
                 <li>Derived fields are cached until dependencies change</li>
                 <li>Complex calculations run only when necessary</li>
-                <li>RxJS streams prevent duplicate computations</li>
+                <li>Reactive streams prevent duplicate computations</li>
               </ul>
             </div>
           </div>

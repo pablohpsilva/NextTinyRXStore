@@ -147,7 +147,7 @@ export default function DerivedFieldsPage() {
               dependencies actually change
             </li>
             <li>
-              <strong>RxJS Integration:</strong> Uses efficient observable
+              <strong>Reactive Integration:</strong> Uses efficient observable
               patterns under the hood
             </li>
           </ul>

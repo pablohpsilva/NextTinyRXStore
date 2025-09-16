@@ -1,5 +1,5 @@
 /**
- * Custom reactive primitives to replace RxJS dependencies
+ * Custom reactive primitives for NextTinyRXStore
  * Implements only the specific functionality needed by NextTinyRXStore
  */
 

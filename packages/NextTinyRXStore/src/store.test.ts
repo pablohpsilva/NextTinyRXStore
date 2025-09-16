@@ -341,7 +341,7 @@ describe("FieldStore", () => {
     });
 
     it("should test client-side hook paths by directly calling subscription functions", () => {
-      // Test the RxJS subscription logic directly by simulating React hook behavior
+      // Test the subscription logic directly by simulating React hook behavior
 
       // Test useField subscription logic - COVERS LINES 234-239
       const nameObservable = store.observable("name");
@@ -1097,7 +1097,7 @@ describe("FieldStore", () => {
   });
 
   describe("memory management and cache behavior", () => {
-    it("should manage subscription cleanup through RxJS observables", () => {
+    it("should manage subscription cleanup through observables", () => {
       const nameObservable = store.observable("name");
       let subscriptionCalled = false;
 
