@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { initializeServerStore } from "@repo/next-tiny-rx-store";
-import { userStore } from "../../../store/demoStores";
+import { userStore } from "../../store/demoStores";
 import SSRUserProfile from "./SSRUserProfile";
 
 // Simulate async data fetching
@@ -42,7 +42,7 @@ export default async function SSRDemoPage() {
       <div className="max-w-4xl mx-auto">
         <div className="mb-8">
           <Link
-            href="/examples"
+            href="/"
             className="inline-flex items-center text-cyan-600 hover:text-cyan-800 dark:text-cyan-400 dark:hover:text-cyan-300"
           >
             ← Back to Examples

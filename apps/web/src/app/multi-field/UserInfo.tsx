@@ -1,5 +1,5 @@
 "use client";
-import { userStore } from "../../../store/demoStores";
+import { userStore } from "../../store/demoStores";
 import { useState, useEffect } from "react";
 
 export default function UserInfo() {

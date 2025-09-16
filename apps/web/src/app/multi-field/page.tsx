@@ -1,6 +1,6 @@
 import Link from "next/link";
 import UserInfo from "./UserInfo";
-import { userStore } from "../../../store/demoStores";
+import { userStore } from "../../store/demoStores";
 import Buttons from "./buttons";
 
 export default function MultiFieldPage() {
@@ -9,7 +9,7 @@ export default function MultiFieldPage() {
       <div className="max-w-4xl mx-auto">
         <div className="mb-8">
           <Link
-            href="/examples"
+            href="/"
             className="inline-flex items-center text-purple-600 hover:text-purple-800 dark:text-purple-400 dark:hover:text-purple-300"
           >
             ← Back to Examples

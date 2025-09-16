@@ -7,7 +7,7 @@ export default function SettersPage() {
       <div className="max-w-4xl mx-auto">
         <div className="mb-8">
           <Link
-            href="/examples"
+            href="/"
             className="inline-flex items-center text-orange-600 hover:text-orange-800 dark:text-orange-400 dark:hover:text-orange-300"
           >
             ← Back to Examples

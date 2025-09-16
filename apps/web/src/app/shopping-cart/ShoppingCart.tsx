@@ -1,5 +1,5 @@
 "use client";
-import { cartStore, sampleProducts, CartItem } from "../../../store/demoStores";
+import { cartStore, sampleProducts, CartItem } from "../../store/demoStores";
 import { useState } from "react";
 
 export default function ShoppingCart() {

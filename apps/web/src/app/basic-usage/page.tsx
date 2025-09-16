@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { userStore } from "../../../store/demoStores";
+import { userStore } from "../../store/demoStores";
 import UserProfile from "./UserProfile";
 
 export default function BasicUsagePage() {
@@ -18,7 +18,7 @@ export default function BasicUsagePage() {
       <div className="max-w-4xl mx-auto">
         <div className="mb-8">
           <Link
-            href="/examples"
+            href="/"
             className="inline-flex items-center text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300"
           >
             ← Back to Examples

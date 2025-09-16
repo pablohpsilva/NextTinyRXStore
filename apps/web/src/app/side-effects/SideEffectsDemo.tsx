@@ -1,5 +1,5 @@
 "use client";
-import { userStore, loggerStore } from "../../../store/demoStores";
+import { userStore, loggerStore } from "../../store/demoStores";
 import { useState, useEffect, useRef } from "react";
 
 const ageCallback = (addLog: (message: string) => void) => (newAge: number) => {
@@ -45,8 +45,6 @@ export default function SideEffectsDemo() {
 
   // Set up side effects when component mounts
   useEffect(() => {
-    console.log("registered");
-
     // Register callbacks - now automatically prevents duplicates via function hashing!
     const ageCleanup = userStore.register("age", ageCallback(addLog));
     const nameCleanup = userStore.register(

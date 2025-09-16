@@ -7,7 +7,7 @@ export default function DerivedFieldsPage() {
       <div className="max-w-4xl mx-auto">
         <div className="mb-8">
           <Link
-            href="/examples"
+            href="/"
             className="inline-flex items-center text-emerald-600 hover:text-emerald-800 dark:text-emerald-400 dark:hover:text-emerald-300"
           >
             ← Back to Examples

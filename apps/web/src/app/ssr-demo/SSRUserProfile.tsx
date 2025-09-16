@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
-import { userStore } from "../../../store/demoStores";
+import { userStore } from "../../store/demoStores";
 
 interface Props {
   serverState: any;
@@ -21,7 +21,6 @@ export default function SSRUserProfile({ serverState }: Props) {
 
   // Track renders
   useEffect(() => {
-    console.log(`name`, user.name);
     setRenderCount((prev) => prev + 1);
   }, [user]);
 

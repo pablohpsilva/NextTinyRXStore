@@ -1,7 +1,7 @@
 "use client";
 
 import uuid from "apps/web/src/store/uuid";
-import { userStore } from "../../../store/demoStores";
+import { userStore } from "../../store/demoStores";
 
 export default function Buttons() {
   const age = userStore.useField("age");

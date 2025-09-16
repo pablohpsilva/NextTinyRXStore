@@ -1,6 +1,6 @@
 import Link from "next/link";
 import UserName from "./UserName";
-import { userStore } from "../../../store/demoStores";
+import { userStore } from "../../store/demoStores";
 import Buttons from "./buttons";
 
 export default function FieldReactivityPage() {
@@ -9,7 +9,7 @@ export default function FieldReactivityPage() {
       <div className="max-w-4xl mx-auto">
         <div className="mb-8">
           <Link
-            href="/examples"
+            href="/"
             className="inline-flex items-center text-green-600 hover:text-green-800 dark:text-green-400 dark:hover:text-green-300"
           >
             ← Back to Examples

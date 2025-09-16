@@ -1,5 +1,5 @@
 "use client";
-import { extendedUserStore } from "../../../store/demoStores";
+import { extendedUserStore } from "../../store/demoStores";
 import { useState, useEffect } from "react";
 
 export default function UserCard() {
