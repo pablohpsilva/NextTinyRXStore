@@ -129,15 +129,6 @@ export default function ExamplesPage() {
             </p>
           </Link> */}
         </div>
-
-        <div className="mt-12 text-center">
-          <Link
-            href="/"
-            className="inline-flex items-center px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors"
-          >
-            ← Back to Main Demo
-          </Link>
-        </div>
       </div>
     </div>
   );
