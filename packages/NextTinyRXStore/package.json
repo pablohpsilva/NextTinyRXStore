@@ -97,6 +97,7 @@
     "perf:comparative": "vitest run src/comparative-benchmarks.test.ts --reporter=verbose",
     "perf:all": "npm run perf:basic && npm run perf:react && npm run perf:comparative",
     "perf:ci": "node --expose-gc -r ts-node/register src/performance-runner.ts --ci",
+    "perf:update-report": "node scripts/update-performance-report.js",
     "publish:dry-run": "npm publish --dry-run",
     "publish:npm": "npm publish",
     "publish:check": "npm run build && npm run test:run && npm run publish:dry-run",
