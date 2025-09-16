@@ -14,7 +14,7 @@
     "turbo": "^2.0.14",
     "typescript": "^5.5.4"
   },
-  "packageManager": "pnpm@9.7.1",
+  "packageManager": "pnpm@latest",
   "workspaces": [
     "apps/*",
     "packages/*"
